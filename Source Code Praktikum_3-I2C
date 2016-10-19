@@ -1,0 +1,118 @@
+//Master 1
+#include <Wire.h>
+void setup(){
+  Wire.begin();        //deklarasi I2C sebagai master
+  Serial.begin(9600);
+}
+void loop(){
+  Wire.requestFrom(2,2);      //request 2 byte data dari device address 2
+  while(Wire.available()){    //data available ??
+    unsigned char dataI2C[2];
+    dataI2C[0] = Wire.read(); //ambil data 2x karena 2 byte
+    dataI2C[1] = Wire.read();
+    unsigned int dataADC = word(dataI2C[1],dataI2C[0]); //gabungkan 2 byte data
+    Serial.println(dataADC);
+  }
+  delay(500);
+}
+
+
+//Slave 1
+#include <Wire.h>
+void setup(){
+  Wire.begin(2);                // address I2C
+  Wire.onRequest(requestEvent); // Deklarasi event
+}
+void loop(){
+  delay(100);
+}
+void requestEvent(){
+  unsigned int dataADC = analogRead(A0);  //ambil data ADC 10 bit
+  unsigned char dataI2C[2];               //Deklarasi array
+  dataI2C[0] = lowByte(dataADC);          //memecah data integer menjadi 2 byte
+  dataI2C[1] = highByte(dataADC);
+  Wire.write(dataI2C,2);
+}
+
+//Master 1 Reading String
+#include <Wire.h>
+
+void setup()
+{
+  Wire.begin();        // join i2c bus (address optional for master)
+  Serial.begin(9600);  // start serial for output
+}
+
+void loop()
+{
+  Wire.requestFrom(8, 6);    // request 6 bytes from slave device #8
+
+  while (Wire.available())   // slave may send less than requested
+  {
+    char c = Wire.read(); // receive a byte as character
+    Serial.print(c);         // print the character
+  }
+
+  delay(500);
+}
+
+//Slave 1 Sender String
+#include <Wire.h>
+
+void setup()
+{
+  Wire.begin(8);                // join i2c bus with address #8
+  Wire.onRequest(requestEvent); // register event
+}
+
+void loop()
+{
+  delay(100);
+}
+
+// function that executes whenever data is requested by master
+// this function is registered as an event, see setup()
+void requestEvent()
+{
+  Wire.write("hello "); // respond with message of 6 bytes
+  // as expected by master
+}
+
+//Master 2
+#include <Wire.h>
+void setup(){
+  Wire.begin();    //deklarasi I2C sebagai master
+}
+void loop(){
+  Wire.beginTransmission(10);  //kirim ke I2C address 4
+  unsigned dataADC =analogRead(A0);
+  unsigned char dataI2C[2];
+  dataI2C[0] = lowByte(dataADC);
+  dataI2C[1] = highByte(dataADC);
+  Wire.write(dataI2C[0]);
+  Wire.write(dataI2C[1]);
+  Wire.endTransmission();
+  delay(500);
+}
+
+//Slave 2
+#include <Wire.h>
+void setup(){
+  Wire.begin(10);//deklarasi I2C slave address 4
+  Wire.onReceive(receiveEvent);   //Deklarasi Event
+  Serial.begin(9600);
+}
+void loop(){
+  delay(100);
+}
+void receiveEvent(int howMany){
+  while(Wire.available()){
+  unsigned char dataI2C[2];
+  dataI2C[0] = Wire.read();
+  dataI2C[1] = Wire.read();
+  unsigned int dataADC = word(dataI2C[1],dataI2C[0]);
+  Serial.println(dataADC);
+  }
+}
+
+
